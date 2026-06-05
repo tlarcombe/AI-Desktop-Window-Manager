@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Callable, Optional
+from collections.abc import Callable
 
-from Xlib import X, XK, display as xdisplay, error as xerror
-from Xlib.ext import record
-from Xlib.protocol import rq
 from ewmh import EWMH
+from Xlib import X
+from Xlib import display as xdisplay
+from Xlib import error as xerror
+from Xlib.protocol import rq
 
 from aidwm.backends.base import Backend
 from aidwm.events import EventType, FocusHint, Geometry, WindowEvent, WindowInfo
@@ -22,11 +23,11 @@ _NET_WM_DESKTOP = "_NET_WM_DESKTOP"
 
 class X11Backend(Backend):
     def __init__(self) -> None:
-        self._ewmh: Optional[EWMH] = None
-        self._display: Optional[xdisplay.Display] = None
+        self._ewmh: EWMH | None = None
+        self._display: xdisplay.Display | None = None
         self._running = threading.Event()
-        self._on_event: Optional[Callable[[WindowEvent], None]] = None
-        self._on_focus_hint: Optional[Callable[[FocusHint], None]] = None
+        self._on_event: Callable[[WindowEvent], None] | None = None
+        self._on_focus_hint: Callable[[FocusHint], None] | None = None
 
     # --- Backend interface ---------------------------------------------------
 
@@ -150,7 +151,7 @@ class X11Backend(Backend):
         if active:
             self._dispatch(WindowEvent(type=EventType.FOCUSED, window_id=active.id))
 
-    def _window_info(self, win: object) -> Optional[WindowInfo]:
+    def _window_info(self, win: object) -> WindowInfo | None:
         assert self._ewmh
         try:
             geo = win.get_geometry()  # type: ignore[union-attr]

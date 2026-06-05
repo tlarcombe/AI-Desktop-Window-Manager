@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -15,7 +14,7 @@ _verbose_option = typer.Option(False, "--verbose", "-v", help="Enable debug logg
 
 @app.command()
 def start(
-    config: Optional[Path] = _config_option,
+    config: Path | None = _config_option,
     verbose: bool = _verbose_option,
 ) -> None:
     """Start the aidwm daemon."""
@@ -32,12 +31,15 @@ def start(
     planner = ZonePlanner()
     engine = LayoutEngine(backend, planner, cfg)
 
-    ipc = IpcServer(cfg.socket_path_resolved(), handler=lambda cmd: _handle_ipc(cmd, engine, cfg, config))
+    ipc = IpcServer(
+        cfg.socket_path_resolved(),
+        handler=lambda cmd: _handle_ipc(cmd, engine, cfg, config),
+    )
     ipc.start()
 
     typer.echo(f"aidwm started. IPC socket: {cfg.socket_path_resolved()}")
     try:
-        engine.run()   # blocks until backend stops
+        engine.run()
     except KeyboardInterrupt:
         typer.echo("Stopping.")
     finally:
@@ -46,7 +48,7 @@ def start(
 
 
 @app.command()
-def reload(config: Optional[Path] = _config_option) -> None:
+def reload(config: Path | None = _config_option) -> None:
     """Signal the running daemon to reload its config."""
     from aidwm.config import Config
     from aidwm.ipc import send_command
@@ -61,7 +63,7 @@ def reload(config: Optional[Path] = _config_option) -> None:
 
 
 @app.command()
-def status(config: Optional[Path] = _config_option) -> None:
+def status(config: Path | None = _config_option) -> None:
     """Show the daemon's current state."""
     from aidwm.config import Config
     from aidwm.ipc import send_command
@@ -72,11 +74,30 @@ def status(config: Optional[Path] = _config_option) -> None:
         typer.echo("aidwm is not running.")
         raise typer.Exit(1)
     response = send_command(sock, {"cmd": "status"})
-    for key, value in response.items():
-        typer.echo(f"{key}: {value}")
+    pinned = response.get("pinned_windows", [])
+    typer.echo(f"status: {response.get('status', '?')}")
+    typer.echo(f"pinned windows: {pinned if pinned else 'none'}")
 
 
-def _handle_ipc(command: dict, engine: object, cfg: object, config_path: Optional[Path]) -> dict:
+@app.command()
+def unpin(
+    window_id: int = typer.Argument(..., help="X11 window ID to release from pinned position"),
+    config: Path | None = _config_option,
+) -> None:
+    """Release a pinned window back into automatic layout."""
+    from aidwm.config import Config
+    from aidwm.ipc import send_command
+
+    cfg = Config.load(config)
+    sock = cfg.socket_path_resolved()
+    if not sock.exists():
+        typer.echo("aidwm is not running.", err=True)
+        raise typer.Exit(1)
+    response = send_command(sock, {"cmd": "unpin", "window_id": window_id})
+    typer.echo(response.get("message", "ok"))
+
+
+def _handle_ipc(command: dict, engine: object, cfg: object, config_path: Path | None) -> dict:
     from aidwm.config import Config
     from aidwm.engine import LayoutEngine
 
@@ -89,8 +110,14 @@ def _handle_ipc(command: dict, engine: object, cfg: object, config_path: Optiona
         case "status":
             return {
                 "status": "running",
-                "socket": str(cfg.socket_path_resolved() if hasattr(cfg, "socket_path_resolved") else "?"),  # type: ignore[union-attr]
+                "pinned_windows": sorted(engine.pinned_ids()),
             }
+        case "unpin":
+            wid = command.get("window_id")
+            if not isinstance(wid, int):
+                return {"status": "error", "message": "window_id required"}
+            engine.unpin(wid)
+            return {"status": "ok", "message": f"Window {wid} unpinned"}
         case _:
             return {"status": "error", "message": f"Unknown command: {command.get('cmd')}"}
 

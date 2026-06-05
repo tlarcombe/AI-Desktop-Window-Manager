@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
 
 
 class EventType(Enum):
@@ -40,10 +39,10 @@ class WindowInfo:
 class WindowEvent:
     type: EventType
     window_id: int
-    geometry: Optional[Geometry] = None
-    title: Optional[str] = None
-    wm_class: Optional[str] = None
-    workspace: Optional[int] = None
+    geometry: Geometry | None = None
+    title: str | None = None
+    wm_class: str | None = None
+    workspace: int | None = None
 
 
 @dataclass

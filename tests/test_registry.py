@@ -1,4 +1,3 @@
-import pytest
 
 from aidwm.config import Config, WindowRule
 from aidwm.events import Geometry, WindowInfo

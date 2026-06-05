@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import List
 
 from aidwm.events import Geometry
 
@@ -55,8 +54,8 @@ class ZoneGrid:
 
     def __init__(
         self,
-        columns: List[float],
-        rows: List[float],
+        columns: list[float],
+        rows: list[float],
         padding: int = 8,
         gap: int = 8,
     ) -> None:
@@ -87,7 +86,7 @@ class ZoneGrid:
 
         return Geometry(x=x0, y=y0, width=x1 - x0, height=y1 - y0)
 
-    def all_zone_specs(self) -> List[ZoneSpec]:
+    def all_zone_specs(self) -> list[ZoneSpec]:
         """Return every single-cell ZoneSpec in the grid."""
         return [
             ZoneSpec(c, c, r, r)
@@ -96,7 +95,7 @@ class ZoneGrid:
         ]
 
 
-def _boundaries(fractions: List[float], net_px: int, origin: int, gap: int) -> List[int]:
+def _boundaries(fractions: list[float], net_px: int, origin: int, gap: int) -> list[int]:
     """Return the pixel start of each slot, plus a final sentinel (right/bottom edge)."""
     result = [origin]
     acc = 0.0

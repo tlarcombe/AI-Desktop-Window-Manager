@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
-from aidwm.config import Config, ZoneConfig
+from aidwm.config import Config
 from aidwm.events import Geometry, WindowInfo
 from aidwm.planner.base import Planner
-from aidwm.zones import ZoneGrid, ZoneSpec, parse_zone
+from aidwm.zones import ZoneGrid, parse_zone
 
 
 class ZonePlanner(Planner):
@@ -25,11 +23,11 @@ class ZonePlanner(Planner):
 
     def plan(
         self,
-        windows: List[WindowInfo],
-        active_id: Optional[int],
+        windows: list[WindowInfo],
+        active_id: int | None,
         screen: Geometry,
         config: Config,
-    ) -> Dict[int, Geometry]:
+    ) -> dict[int, Geometry]:
         if not windows:
             return {}
 
@@ -47,7 +45,7 @@ class ZonePlanner(Planner):
         active = next((w for w in windows if w.id == active_id), None)
         others = [w for w in windows if w.id != (active.id if active else None)]
 
-        result: Dict[int, Geometry] = {}
+        result: dict[int, Geometry] = {}
 
         if active:
             result[active.id] = grid.geometry(main_spec, screen)

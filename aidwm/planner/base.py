@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
 
 from aidwm.config import Config
 from aidwm.events import Geometry, WindowInfo
@@ -18,9 +17,9 @@ class Planner(ABC):
     @abstractmethod
     def plan(
         self,
-        windows: List[WindowInfo],
-        active_id: Optional[int],
+        windows: list[WindowInfo],
+        active_id: int | None,
         screen: Geometry,
         config: Config,
-    ) -> Dict[int, Geometry]:
+    ) -> dict[int, Geometry]:
         """Return a mapping of window_id → target Geometry for all windows."""

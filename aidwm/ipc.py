@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import socket
 import threading
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 log = logging.getLogger(__name__)
 
@@ -22,8 +21,8 @@ class IpcServer:
     def __init__(self, socket_path: Path, handler: Callable[[dict], dict]) -> None:
         self._path = socket_path
         self._handler = handler
-        self._sock: Optional[socket.socket] = None
-        self._thread: Optional[threading.Thread] = None
+        self._sock: socket.socket | None = None
+        self._thread: threading.Thread | None = None
 
     def start(self) -> None:
         if self._path.exists():

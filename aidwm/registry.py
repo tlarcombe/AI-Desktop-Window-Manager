@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, Optional
 
 from aidwm.config import Config, WindowRule
 from aidwm.events import Geometry, WindowInfo
@@ -9,8 +8,8 @@ from aidwm.events import Geometry, WindowInfo
 
 class WindowRegistry:
     def __init__(self) -> None:
-        self._windows: Dict[int, WindowInfo] = {}
-        self._focused_id: Optional[int] = None
+        self._windows: dict[int, WindowInfo] = {}
+        self._focused_id: int | None = None
 
     # --- mutations -----------------------------------------------------------
 
@@ -23,9 +22,8 @@ class WindowRegistry:
             self._focused_id = None
 
     def set_focused(self, window_id: int) -> None:
-        if prev := self._focused_id:
-            if prev in self._windows:
-                self._windows[prev].is_focused = False
+        if (prev := self._focused_id) and prev in self._windows:
+            self._windows[prev].is_focused = False
         self._focused_id = window_id
         if window_id in self._windows:
             self._windows[window_id].is_focused = True
@@ -40,10 +38,10 @@ class WindowRegistry:
 
     # --- queries -------------------------------------------------------------
 
-    def get(self, window_id: int) -> Optional[WindowInfo]:
+    def get(self, window_id: int) -> WindowInfo | None:
         return self._windows.get(window_id)
 
-    def focused_id(self) -> Optional[int]:
+    def focused_id(self) -> int | None:
         return self._focused_id
 
     def windows_on_workspace(self, workspace: int) -> list[WindowInfo]:
@@ -56,7 +54,7 @@ class WindowRegistry:
 
     def matching_rule(
         self, info: WindowInfo, config: Config, current_workspace: int
-    ) -> Optional[WindowRule]:
+    ) -> WindowRule | None:
         """Return the first rule that matches this window on the current workspace."""
         for rule in config.rules:
             if not _matches_pattern(info, rule):
@@ -69,7 +67,7 @@ class WindowRegistry:
         return None
 
     # kept for backward-compat with existing tests
-    def fixed_position_for(self, info: WindowInfo, config: Config) -> Optional[Geometry]:
+    def fixed_position_for(self, info: WindowInfo, config: Config) -> Geometry | None:
         for rule in config.rules:
             if _matches_pattern(info, rule):
                 return rule.fixed_position

@@ -1,14 +1,8 @@
 from __future__ import annotations
 
-import sys
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib  # type: ignore[no-reuse-def]
 
 from aidwm.events import Geometry
 
@@ -18,10 +12,10 @@ BUNDLED_DEFAULT = Path(__file__).parent.parent / "config" / "default.toml"
 
 @dataclass
 class ZoneConfig:
-    columns: List[float] = field(default_factory=lambda: [0.25, 0.25, 0.25, 0.25])
-    rows: List[float] = field(default_factory=lambda: [0.5, 0.5])
+    columns: list[float] = field(default_factory=lambda: [0.25, 0.25, 0.25, 0.25])
+    rows: list[float] = field(default_factory=lambda: [0.5, 0.5])
     main: str = "b2:c2"
-    secondary: List[str] = field(default_factory=lambda: ["a2", "d2", "a1", "d1"])
+    secondary: list[str] = field(default_factory=lambda: ["a2", "d2", "a1", "d1"])
 
 
 @dataclass
@@ -34,9 +28,9 @@ class LayoutConfig:
 class WindowRule:
     class_pattern: str = ".*"
     title_pattern: str = ".*"
-    zone: Optional[str] = None              # e.g. "b1", "c1:d1"
-    fixed_position: Optional[Geometry] = None
-    workspace: Optional[int] = None         # None = any workspace
+    zone: str | None = None              # e.g. "b1", "c1:d1"
+    fixed_position: Geometry | None = None
+    workspace: int | None = None         # None = any workspace
     fixed_across_workspaces: bool = False   # sticky: visible on all workspaces
     priority: int = 0
 
@@ -53,10 +47,10 @@ class Config:
     general: GeneralConfig = field(default_factory=GeneralConfig)
     layout: LayoutConfig = field(default_factory=LayoutConfig)
     zones: ZoneConfig = field(default_factory=ZoneConfig)
-    rules: List[WindowRule] = field(default_factory=list)
+    rules: list[WindowRule] = field(default_factory=list)
 
     @classmethod
-    def load(cls, path: Optional[Path] = None) -> "Config":
+    def load(cls, path: Path | None = None) -> Config:
         source = path or DEFAULT_CONFIG_PATH
         if not source.exists():
             source = BUNDLED_DEFAULT
@@ -64,7 +58,7 @@ class Config:
         return cls._from_dict(raw)
 
     @classmethod
-    def _from_dict(cls, raw: dict) -> "Config":
+    def _from_dict(cls, raw: dict) -> Config:
         general_raw = raw.get("general", {})
         layout_raw = raw.get("layout", {})
         zones_raw = layout_raw.get("zones", {})
