@@ -97,7 +97,9 @@ def unpin(
     typer.echo(response.get("message", "ok"))
 
 
-def _handle_ipc(command: dict, engine: object, cfg: object, config_path: Path | None) -> dict:
+def _handle_ipc(
+    command: dict[str, object], engine: object, cfg: object, config_path: Path | None
+) -> dict[str, object]:
     from aidwm.config import Config
     from aidwm.engine import LayoutEngine
 

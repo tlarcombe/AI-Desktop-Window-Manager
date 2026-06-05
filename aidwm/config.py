@@ -3,6 +3,7 @@ from __future__ import annotations
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from aidwm.events import Geometry
 
@@ -58,7 +59,7 @@ class Config:
         return cls._from_dict(raw)
 
     @classmethod
-    def _from_dict(cls, raw: dict) -> Config:
+    def _from_dict(cls, raw: dict[str, Any]) -> Config:
         general_raw = raw.get("general", {})
         layout_raw = raw.get("layout", {})
         zones_raw = layout_raw.get("zones", {})

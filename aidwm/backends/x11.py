@@ -154,14 +154,14 @@ class X11Backend(Backend):
     def _window_info(self, win: object) -> WindowInfo | None:
         assert self._ewmh
         try:
-            geo = win.get_geometry()  # type: ignore[union-attr]
-            name = self._ewmh.getWmName(win) or ""  # type: ignore[arg-type]
-            wm_class = win.get_wm_class()  # type: ignore[union-attr]
+            geo = win.get_geometry()  # type: ignore[attr-defined]
+            name = self._ewmh.getWmName(win) or ""
+            wm_class = win.get_wm_class()  # type: ignore[attr-defined]
             class_str = ".".join(wm_class) if wm_class else "unknown"
-            desktop = self._ewmh.getWmDesktop(win)  # type: ignore[arg-type]
+            desktop = self._ewmh.getWmDesktop(win)
             workspace = int(desktop) if desktop is not None else 0
             return WindowInfo(
-                id=win.id,  # type: ignore[union-attr]
+                id=win.id,  # type: ignore[attr-defined]
                 title=name if isinstance(name, str) else name.decode("utf-8", errors="replace"),
                 wm_class=class_str,
                 workspace=workspace,

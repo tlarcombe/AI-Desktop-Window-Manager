@@ -18,7 +18,9 @@ class IpcServer:
     Accepts single-line JSON commands; sends single-line JSON responses.
     """
 
-    def __init__(self, socket_path: Path, handler: Callable[[dict], dict]) -> None:
+    def __init__(
+        self, socket_path: Path, handler: Callable[[dict[str, object]], dict[str, object]]
+    ) -> None:
         self._path = socket_path
         self._handler = handler
         self._sock: socket.socket | None = None
@@ -61,9 +63,10 @@ class IpcServer:
                 log.exception("IPC error")
 
 
-def send_command(socket_path: Path, command: dict) -> dict:
+def send_command(socket_path: Path, command: dict[str, object]) -> dict[str, object]:
     """Send a command to the daemon and return the response."""
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
         sock.connect(str(socket_path))
         sock.sendall((json.dumps(command) + "\n").encode())
-        return json.loads(sock.recv(_BUFSIZE).decode())
+        result: dict[str, object] = json.loads(sock.recv(_BUFSIZE).decode())
+        return result
