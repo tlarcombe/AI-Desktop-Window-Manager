@@ -1,0 +1,23 @@
+[general]
+trigger_on_focus = true
+layout_delay_ms  = 50        # debounce (ms) before re-layout fires
+
+[layout]
+padding          = 8         # pixels between windows and screen edges
+gap              = 8         # pixels between adjacent windows
+active_fraction  = 0.6       # active window takes this fraction of screen width
+
+# --- Window rules ---
+# Rules are evaluated top-to-bottom; first match wins.
+# Both class and title accept Python regular expressions.
+
+# Example: pin a terminal to the right half on every workspace
+# [[rules]]
+# class                  = "Alacritty"
+# fixed_position         = { x = 960, y = 0, width = 960, height = 1080 }
+# fixed_across_workspaces = true
+
+# Example: give a browser lower priority so it yields space to other windows
+# [[rules]]
+# class    = "firefox"
+# priority = -1

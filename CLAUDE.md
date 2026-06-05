@@ -54,7 +54,36 @@ Decides how to tile/stack windows:
 
 ## Commands
 
-> Build, test, and lint commands will be added here once the technology stack and project scaffolding are established.
+```bash
+# Install (editable, with dev tools)
+pip install -e ".[dev]"
+
+# Run the daemon
+aidwm start
+aidwm start --config /path/to/config.toml --verbose
+
+# Control a running daemon
+aidwm reload
+aidwm status
+
+# Run all tests
+pytest
+
+# Run a single test file
+pytest tests/test_heuristic_planner.py
+
+# Run a single test by name
+pytest -k "test_active_window_gets_left_fraction"
+
+# Lint
+ruff check aidwm tests
+
+# Type check
+mypy aidwm
+
+# Auto-fix lint issues
+ruff check --fix aidwm tests
+```
 
 ## Configuration Model
 
