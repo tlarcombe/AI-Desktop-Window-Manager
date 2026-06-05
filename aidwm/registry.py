@@ -54,10 +54,24 @@ class WindowRegistry:
 
     # --- rule matching -------------------------------------------------------
 
-    def fixed_position_for(self, info: WindowInfo, config: Config) -> Optional[Geometry]:
-        """Return the fixed geometry for a window if a rule applies, else None."""
+    def matching_rule(
+        self, info: WindowInfo, config: Config, current_workspace: int
+    ) -> Optional[WindowRule]:
+        """Return the first rule that matches this window on the current workspace."""
         for rule in config.rules:
-            if _matches(info, rule):
+            if not _matches_pattern(info, rule):
+                continue
+            # workspace-restricted rules only apply on that workspace
+            if rule.workspace is not None and rule.workspace != current_workspace:
+                continue
+            if rule.zone or rule.fixed_position:
+                return rule
+        return None
+
+    # kept for backward-compat with existing tests
+    def fixed_position_for(self, info: WindowInfo, config: Config) -> Optional[Geometry]:
+        for rule in config.rules:
+            if _matches_pattern(info, rule):
                 return rule.fixed_position
         return None
 
@@ -65,7 +79,7 @@ class WindowRegistry:
         return len(self._windows)
 
 
-def _matches(info: WindowInfo, rule: WindowRule) -> bool:
+def _matches_pattern(info: WindowInfo, rule: WindowRule) -> bool:
     return (
         re.search(rule.class_pattern, info.wm_class, re.IGNORECASE) is not None
         and re.search(rule.title_pattern, info.title, re.IGNORECASE) is not None

@@ -3,21 +3,44 @@ trigger_on_focus = true
 layout_delay_ms  = 50        # debounce (ms) before re-layout fires
 
 [layout]
-padding          = 8         # pixels between windows and screen edges
-gap              = 8         # pixels between adjacent windows
-active_fraction  = 0.6       # active window takes this fraction of screen width
+padding = 8                  # pixels between windows and screen edges
+gap     = 8                  # pixels between adjacent windows
+
+[layout.zones]
+# 4-column × 2-row grid.  Columns a–d left→right, rows 1–2 top→bottom.
+#
+#   a (25%)   b (25%)   c (25%)   d (25%)
+#  ┌─────────┬─────────┬─────────┬─────────┐
+#  │   a1    │   b1    │      c1+d1        │  row 1 (top 50%)
+#  │         │  (ytv)  │      (mpv)        │
+#  ├─────────┼─────────┴─────────┬─────────┤
+#  │   a2    │    b2 + c2        │   d2    │  row 2 (bottom 50%)
+#  │         │   ← MAIN ZONE →   │         │
+#  └─────────┴───────────────────┴─────────┘
+#
+columns   = [0.25, 0.25, 0.25, 0.25]
+rows      = [0.50, 0.50]
+main      = "b2:c2"                    # active window always lands here
+secondary = ["a2", "d2", "a1", "d1"]  # overflow windows in priority order
+
 
 # --- Window rules ---
 # Rules are evaluated top-to-bottom; first match wins.
-# Both class and title accept Python regular expressions.
+# 'class' and 'title' accept Python regular expressions (case-insensitive).
+# 'workspace' is 0-indexed (workspace 9 = index 8 in most WMs; check yours
+#  with: xdotool get_desktop).
 
-# Example: pin a terminal to the right half on every workspace
-# [[rules]]
-# class                  = "Alacritty"
-# fixed_position         = { x = 960, y = 0, width = 960, height = 1080 }
-# fixed_across_workspaces = true
+# ytv terminal — pinned to b1, workspace 9 only.
+# ytv likely runs in a terminal; match by window title.
+# Adjust 'title' if your terminal sets a different title.
+[[rules]]
+title     = "ytv"
+zone      = "b1"
+workspace = 8                          # 0-indexed: desktop 9 = index 8
 
-# Example: give a browser lower priority so it yields space to other windows
-# [[rules]]
-# class    = "firefox"
-# priority = -1
+# mpv video player — pinned to c1:d1 (top-right half), all workspaces.
+# Set mpv as sticky in your WM or via: wmctrl -r mpv -b add,sticky
+[[rules]]
+class                   = "mpv"
+zone                    = "c1:d1"
+fixed_across_workspaces = true

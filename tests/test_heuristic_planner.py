@@ -34,7 +34,7 @@ class TestHeuristicPlanner:
         cfg = Config()
         windows = [_win(1), _win(2)]
         result = _plan(windows, active_id=1)
-        expected_w = int((SCREEN.width - 2 * cfg.layout.padding) * cfg.layout.active_fraction) - cfg.layout.gap // 2
+        expected_w = int((SCREEN.width - 2 * cfg.layout.padding) * 0.6) - cfg.layout.gap // 2
         assert result[1].width == expected_w
         assert result[1].x == cfg.layout.padding
 

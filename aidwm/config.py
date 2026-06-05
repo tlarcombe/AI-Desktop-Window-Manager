@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -17,33 +17,43 @@ BUNDLED_DEFAULT = Path(__file__).parent.parent / "config" / "default.toml"
 
 
 @dataclass
+class ZoneConfig:
+    columns: List[float] = field(default_factory=lambda: [0.25, 0.25, 0.25, 0.25])
+    rows: List[float] = field(default_factory=lambda: [0.5, 0.5])
+    main: str = "b2:c2"
+    secondary: List[str] = field(default_factory=lambda: ["a2", "d2", "a1", "d1"])
+
+
+@dataclass
 class LayoutConfig:
     padding: int = 8
     gap: int = 8
-    active_fraction: float = 0.6    # fraction of screen width for the active window
 
 
 @dataclass
 class WindowRule:
     class_pattern: str = ".*"
     title_pattern: str = ".*"
+    zone: Optional[str] = None              # e.g. "b1", "c1:d1"
     fixed_position: Optional[Geometry] = None
-    fixed_across_workspaces: bool = False
-    priority: int = 0               # higher = more important to the planner
+    workspace: Optional[int] = None         # None = any workspace
+    fixed_across_workspaces: bool = False   # sticky: visible on all workspaces
+    priority: int = 0
 
 
 @dataclass
 class GeneralConfig:
     trigger_on_focus: bool = True
-    layout_delay_ms: int = 50       # debounce before re-layout
-    socket_path: str = ""           # empty = auto (/run/user/{uid}/aidwm.sock)
+    layout_delay_ms: int = 50
+    socket_path: str = ""
 
 
 @dataclass
 class Config:
     general: GeneralConfig = field(default_factory=GeneralConfig)
     layout: LayoutConfig = field(default_factory=LayoutConfig)
-    rules: list[WindowRule] = field(default_factory=list)
+    zones: ZoneConfig = field(default_factory=ZoneConfig)
+    rules: List[WindowRule] = field(default_factory=list)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -57,6 +67,7 @@ class Config:
     def _from_dict(cls, raw: dict) -> "Config":
         general_raw = raw.get("general", {})
         layout_raw = raw.get("layout", {})
+        zones_raw = layout_raw.get("zones", {})
         rules_raw = raw.get("rules", [])
 
         general = GeneralConfig(
@@ -67,7 +78,12 @@ class Config:
         layout = LayoutConfig(
             padding=layout_raw.get("padding", 8),
             gap=layout_raw.get("gap", 8),
-            active_fraction=layout_raw.get("active_fraction", 0.6),
+        )
+        zones = ZoneConfig(
+            columns=zones_raw.get("columns", [0.25, 0.25, 0.25, 0.25]),
+            rows=zones_raw.get("rows", [0.5, 0.5]),
+            main=zones_raw.get("main", "b2:c2"),
+            secondary=zones_raw.get("secondary", ["a2", "d2", "a1", "d1"]),
         )
         rules = []
         for r in rules_raw:
@@ -75,11 +91,13 @@ class Config:
             rules.append(WindowRule(
                 class_pattern=r.get("class", ".*"),
                 title_pattern=r.get("title", ".*"),
+                zone=r.get("zone"),
                 fixed_position=Geometry(**fp) if fp else None,
+                workspace=r.get("workspace"),
                 fixed_across_workspaces=r.get("fixed_across_workspaces", False),
                 priority=r.get("priority", 0),
             ))
-        return cls(general=general, layout=layout, rules=rules)
+        return cls(general=general, layout=layout, zones=zones, rules=rules)
 
     def socket_path_resolved(self) -> Path:
         if self.general.socket_path:

@@ -36,7 +36,7 @@ class HeuristicPlanner(Planner):
 
         p = config.layout.padding
         g = config.layout.gap
-        frac = config.layout.active_fraction
+        frac = 0.6      # active window takes 60% of width
 
         usable_x = screen.x + p
         usable_y = screen.y + p

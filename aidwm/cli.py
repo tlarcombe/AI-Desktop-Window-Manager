@@ -25,11 +25,11 @@ def start(
     from aidwm.config import Config
     from aidwm.engine import LayoutEngine
     from aidwm.ipc import IpcServer
-    from aidwm.planner.heuristic import HeuristicPlanner
+    from aidwm.planner.zone import ZonePlanner
 
     cfg = Config.load(config)
     backend = X11Backend()
-    planner = HeuristicPlanner()
+    planner = ZonePlanner()
     engine = LayoutEngine(backend, planner, cfg)
 
     ipc = IpcServer(cfg.socket_path_resolved(), handler=lambda cmd: _handle_ipc(cmd, engine, cfg, config))

@@ -5,10 +5,11 @@ import threading
 from typing import Optional
 
 from aidwm.backends.base import Backend
-from aidwm.config import Config
+from aidwm.config import Config, WindowRule
 from aidwm.events import EventType, FocusHint, Geometry, WindowEvent, WindowInfo
 from aidwm.planner.base import Planner
 from aidwm.registry import WindowRegistry
+from aidwm.zones import ZoneGrid, parse_zone
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +22,12 @@ class LayoutEngine:
     Event flow:
         Backend → on_event() → registry mutation → _schedule_layout()
         _schedule_layout() → debounce timer → _apply_layout()
-        _apply_layout() → planner.plan() → fixed-override → backend.apply_geometry()
+        _apply_layout() → planner.plan() → rule overrides → backend.apply_geometry()
+
+    Rule override priority (highest wins):
+        1. fixed_position  (absolute pixel geometry)
+        2. zone            (grid-relative geometry, converted at layout time)
+        3. planner output
 
     FocusHint flow (gaze / mouse proximity):
         Source → on_focus_hint() → registry.set_focused() → _schedule_layout()
@@ -113,14 +119,23 @@ class LayoutEngine:
         if not windows:
             return
 
+        # Build zone grid once per layout pass
+        zc = config.zones
+        grid = ZoneGrid(columns=zc.columns, rows=zc.rows,
+                        padding=config.layout.padding, gap=config.layout.gap)
+
         geometries = self._planner.plan(windows, active_id, screen, config)
 
-        # Apply fixed-position overrides (these win over planner output)
+        # Apply rule overrides (fixed_position > zone > planner)
         with self._lock:
             for win in windows:
-                fixed = self._registry.fixed_position_for(win, config)
-                if fixed:
-                    geometries[win.id] = fixed
+                rule = self._registry.matching_rule(win, config, workspace)
+                if rule is None:
+                    continue
+                if rule.fixed_position:
+                    geometries[win.id] = rule.fixed_position
+                elif rule.zone:
+                    geometries[win.id] = grid.geometry(parse_zone(rule.zone), screen)
 
         for window_id, geo in geometries.items():
             self._backend.apply_geometry(window_id, geo)
